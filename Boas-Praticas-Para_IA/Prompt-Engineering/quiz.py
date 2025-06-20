@@ -1,9 +1,11 @@
-# cria uma lista de questões com 5 perguntas e 4 possiveis respostas de cada
-# cada pergunta deve ter uma resposta correta
-# cada resposta correta vale 1 ponto
-# esse quiz sera de varias capitais do mundo
+# Quiz de Capitais do Mundo
+# Este script implementa um quiz interativo sobre capitais do mundo, com limite de tempo para resposta.
 
-import random
+import random  # Importa o módulo para embaralhar perguntas e respostas
+import threading  # Importa o módulo para criar threads (usado no timeout do input)
+import sys
+
+# Lista de perguntas do quiz, cada uma com 4 opções e uma resposta correta
 questions = [
     {
         "question": "Qual é a capital da França?",
@@ -29,22 +31,77 @@ questions = [
         "question": "Qual é a capital da Austrália?",
         "options": ["Canberra", "Sydney", "Melbourne", "Brisbane"],
         "answer": "Canberra"
+    },
+    # Novas perguntas adicionadas
+    {
+        "question": "Qual é a capital do Canadá?",
+        "options": ["Toronto", "Ottawa", "Vancouver", "Montreal"],
+        "answer": "Ottawa"
+    },
+    {
+        "question": "Qual é a capital da Rússia?",
+        "options": ["São Petersburgo", "Moscou", "Kazan", "Novosibirsk"],
+        "answer": "Moscou"
+    },
+    {
+        "question": "Qual é a capital da Argentina?",
+        "options": ["Buenos Aires", "Córdoba", "Rosário", "Mendoza"],
+        "answer": "Buenos Aires"
+    },
+    {
+        "question": "Qual é a capital da África do Sul?",
+        "options": ["Cidade do Cabo", "Pretória", "Joanesburgo", "Durban"],
+        "answer": "Pretória"
+    },
+    {
+        "question": "Qual é a capital da Índia?",
+        "options": ["Nova Délhi", "Mumbai", "Bangalore", "Chennai"],
+        "answer": "Nova Délhi"
     }
 ]
 
-# escreva uma função que recebe a questão e as exibe uma a uma para o usuario
-# ela retorna a resposta do usuario e valida se a resposta está correta ou é um erro
+# Função para ler a resposta do usuário com limite de tempo (timeout)
+def input_with_timeout(prompt, timeout):
+    """
+    Exibe um prompt e aguarda a resposta do usuário por até 'timeout' segundos.
+    Retorna a resposta ou None se o tempo esgotar.
+    """
+    result = [None]
+    def inner():
+        try:
+            result[0] = input(prompt)
+        except Exception:
+            result[0] = None
+    thread = threading.Thread(target=inner)
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout)
+    if thread.is_alive():
+        print('\nTempo esgotado!')
+        return None
+    return result[0]
+
+# Função que exibe uma pergunta, embaralha as opções e valida a resposta do usuário
 def show_question(question):
+    """
+    Mostra a pergunta e as opções (embaralhadas), aguarda resposta do usuário
+    por até 10 segundos. Informa se acertou, errou ou perdeu a pergunta por tempo.
+    """
     print(question["question"])
-    for i, option in enumerate(question["options"], start=1):
+    # Embaralha as opções de resposta
+    options = question["options"][:]
+    random.shuffle(options)
+    for i, option in enumerate(options, start=1):
         print(f"{i}. {option}")
-    
     try:
-        answer_index = int(input("Escolha a opção correta (1-4): ")) - 1
-        if answer_index < 0 or answer_index >= len(question["options"]):
+        answer = input_with_timeout("Escolha a opção correta (1-4): ", 10)
+        if answer is None:
+            print(f'Pergunta perdida. A resposta correta é: {question["answer"]}')
+            return False
+        answer_index = int(answer) - 1
+        if answer_index < 0 or answer_index >= len(options):
             raise ValueError("Opção inválida.")
-        
-        user_answer = question["options"][answer_index]
+        user_answer = options[answer_index]
         if user_answer == question["answer"]:
             print("Resposta correta!")
             return True
@@ -54,11 +111,30 @@ def show_question(question):
     except ValueError as e:
         print(f"Erro: {e}")
         return False
-    
 
+# Função que percorre todas as perguntas e calcula a pontuação final
+def check_answers(questions):
+    """
+    Percorre todas as perguntas, chama show_question para cada uma,
+    soma os acertos e exibe a pontuação final.
+    """
+    score = 0
+    for question in questions:
+        if show_question(question):
+            score += 1
+    print(f"Sua pontuação final é: {score}/{len(questions)}")
+
+# Função principal do programa
 def main():
+    """
+    Dá boas-vindas, embaralha as perguntas e inicia o quiz.
+    """
+    print("Bem-vindo ao Quiz de Capitais do Mundo!")
+    random.shuffle(questions)  # Embaralha a ordem das perguntas
+    check_answers(questions)
+    print("Obrigado por jogar!")
     pass
 
-
+# Executa o programa se for chamado diretamente
 if __name__ == "__main__":
     main()
