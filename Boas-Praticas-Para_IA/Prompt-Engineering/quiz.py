@@ -86,43 +86,81 @@ def show_question(question):
     """
     Mostra a pergunta e as opções (embaralhadas), aguarda resposta do usuário
     por até 10 segundos. Informa se acertou, errou ou perdeu a pergunta por tempo.
+    Deixa a interface mais bonita com bordas e cores.
     """
-    print(question["question"])
+    # ANSI escape codes para cores
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
     # Embaralha as opções de resposta
     options = question["options"][:]
     random.shuffle(options)
+    # Monta a caixa da pergunta
+    print(f"{CYAN}{BOLD}┌{'─'*46}┐{RESET}")
+    print(f"{CYAN}{BOLD}│ {question['question']:<44}│{RESET}")
     for i, option in enumerate(options, start=1):
-        print(f"{i}. {option}")
+        print(f"{CYAN}{BOLD}│ {i}. {option:<41}{RESET}{CYAN}{BOLD}│{RESET}")
+    print(f"{CYAN}{BOLD}└{'─'*46}┘{RESET}")
     try:
-        answer = input_with_timeout("Escolha a opção correta (1-4): ", 10)
+        answer = input_with_timeout(f"{YELLOW}Escolha a opção correta (1-4): {RESET}", 10)
         if answer is None:
-            print(f'Pergunta perdida. A resposta correta é: {question["answer"]}')
+            print(f'{RED}Pergunta perdida. A resposta correta é: {question["answer"]}{RESET}')
             return False
         answer_index = int(answer) - 1
         if answer_index < 0 or answer_index >= len(options):
             raise ValueError("Opção inválida.")
         user_answer = options[answer_index]
         if user_answer == question["answer"]:
-            print("Resposta correta!")
+            print(f"{GREEN}Resposta correta!{RESET}")
             return True
         else:
-            print(f"Resposta incorreta. A resposta correta é: {question['answer']}")
+            print(f"{RED}Resposta incorreta. A resposta correta é: {question['answer']}{RESET}")
             return False
     except ValueError as e:
-        print(f"Erro: {e}")
+        print(f"{RED}Erro: {e}{RESET}")
         return False
 
 # Função que percorre todas as perguntas e calcula a pontuação final
 def check_answers(questions):
     """
     Percorre todas as perguntas, chama show_question para cada uma,
-    soma os acertos e exibe a pontuação final.
+    soma os acertos e exibe a pontuação final, a porcentagem de acertos e um feedback personalizado.
     """
     score = 0
     for question in questions:
         if show_question(question):
             score += 1
-    print(f"Sua pontuação final é: {score}/{len(questions)}")
+    total = len(questions)
+    percent = (score / total) * 100 if total > 0 else 0
+    print(f"Sua pontuação final é: {score}/{total} ({percent:.1f}% de acertos)")
+    # Feedback personalizado por faixa de porcentagem
+    if percent == 0:
+        print("Poxa, errou todas! Tente novamente!")
+    elif percent <= 10:
+        print("Que pena! Mas não desista, tente de novo!")
+    elif percent <= 20:
+        print("Ainda está difícil, mas continue praticando!")
+    elif percent <= 30:
+        print("Você está começando, não desanime!")
+    elif percent <= 40:
+        print("Quase na metade, continue tentando!")
+    elif percent <= 50:
+        print("Boa! Mas dá pra melhorar!")
+    elif percent <= 60:
+        print("Mais da metade! Está indo bem!")
+    elif percent <= 70:
+        print("Quase lá! Continue assim!")
+    elif percent <= 80:
+        print("Ótimo! Você sabe bastante!")
+    elif percent <= 90:
+        print("Excelente! Só mais um pouco para a perfeição!")
+    elif percent < 100:
+        print("Uau! Você é quase um gênio das capitais!")
+    else:
+        print("Parabéns, você é um gênio das capitais do mundo!!")
 
 # Função principal do programa
 def main():
